@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phigros B图片渲染工具</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Microsoft YaHei','Segoe UI',sans-serif}
+        body{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#e0e0e0;min-height:100vh;padding:20px}
+        .container{max-width:1400px;margin:0 auto}
+        header{text-align:center;margin-bottom:30px;padding:20px;background:rgba(30,30,46,.8);border-radius:15px;border:1px solid #3498db;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+        h1{color:#3498db;font-size:2.5rem;margin-bottom:10px;text-shadow:0 2px 5px rgba(0,0,0,.5)}
+        .subtitle{color:#7fdbda;font-size:1.1rem}
+        .main-content{display:flex;flex-wrap:wrap;gap:30px;margin-bottom:40px}
+        .input-section,.output-section{flex:1;min-width:300px;background:rgba(30,30,46,.8);padding:25px;border-radius:15px;border:1px solid #2ecc71;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+        .output-section{border-color:#e74c3c;flex:2;min-width:400px}
+        .section-title{color:#2ecc71;font-size:1.5rem;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid #3498db}
+        .output-section .section-title{color:#e74c3c}
+        .form-group{margin-bottom:20px}
+        label{display:block;margin-bottom:8px;color:#7fdbda;font-weight:bold}
+        input,textarea,select{width:100%;padding:12px 15px;background:rgba(20,20,35,.8);border:2px solid #3498db;border-radius:8px;color:#fff;font-size:1rem;transition:all .3s}
+        input:focus,textarea:focus,select:focus{outline:none;border-color:#2ecc71;box-shadow:0 0 10px rgba(46,204,113,.5)}
+        textarea{min-height:120px;resize:vertical;font-family:monospace}
+        .number-inputs{display:flex;gap:15px}
+        .number-inputs .form-group{flex:1}
+        .checkbox-group{display:flex;align-items:center;gap:10px;margin-bottom:15px}
+        .checkbox-group label{margin:0}
+        .btn{background:linear-gradient(135deg,#3498db,#2c3e50);color:#fff;border:none;padding:14px 25px;border-radius:8px;font-size:1.1rem;font-weight:bold;cursor:pointer;transition:all .3s;width:100%;margin-top:10px}
+        .btn:hover{background:linear-gradient(135deg,#2ecc71,#27ae60);transform:translateY(-2px);box-shadow:0 5px 15px rgba(46,204,113,.4)}
+        .btn:active{transform:translateY(0)}
+        .output-container{position:relative;min-height:300px;background:rgba(20,20,35,.8);border-radius:8px;padding:20px;overflow:auto;max-height:600px}
+        .loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.2rem;color:#3498db}
+        .image-container{text-align:center;margin-top:20px}
+        canvas{max-width:100%;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+        .raw-data{background:rgba(20,20,35,.8);padding:15px;border-radius:8px;margin-top:20px;max-height:300px;overflow:auto}
+        .raw-data pre{white-space:pre-wrap;word-wrap:break-word;font-family:monospace;font-size:.9rem;line-height:1.4;color:#bdc3c7}
+        .tabs{display:flex;margin-bottom:20px;border-bottom:2px solid #3498db}
+        .tab{padding:10px 20px;cursor:pointer;color:#bdc3c7;transition:all .3s;border-bottom:2px solid transparent;margin-bottom:-2px}
+        .tab.active{color:#3498db;border-bottom-color:#3498db;font-weight:bold}
+        .tab-content{display:none}
+        .tab-content.active{display:block}
+        .instructions{background:rgba(41,128,185,.2);padding:20px;border-radius:10px;margin-top:30px;border-left:5px solid #3498db}
+        .instructions h3{color:#3498db;margin-bottom:15px}
+        .instructions ul{padding-left:20px;line-height:1.6}
+        .instructions li{margin-bottom:10px}
+        footer{text-align:center;padding:20px;color:#7f8c8d;font-size:.9rem;border-top:1px solid #34495e;margin-top:40px}
+        .progress-container{margin-bottom:20px;padding:15px;background:rgba(30,30,46,.8);border-radius:8px;border:1px solid #3498db}
+        .progress-bar{width:100%;height:20px;background:rgba(20,20,35,.8);border-radius:10px;overflow:hidden;margin-top:10px}
+        .progress-fill{height:100%;background:linear-gradient(90deg,#3498db,#2ecc71);border-radius:10px;transition:width .3s}
+        .progress-text{font-size:14px;color:#7fdbda;margin-top:5px;text-align:center}
+        @media (max-width:768px){.main-content{flex-direction:column}.number-inputs{flex-direction:column;gap:0}}
+        .options-group{display:flex;flex-direction:column;gap:15px;margin-top:20px;padding:15px;background:rgba(40,40,60,.8);border-radius:10px;border:1px solid #9b59b6}
+        .options-group h4{color:#9b59b6;margin-bottom:10px;font-size:1.1rem}
+        .checkbox-row{display:flex;flex-wrap:wrap;gap:15px}
+        .checkbox-row .checkbox-group{flex:1;min-width:120px}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Phigros B图片渲染工具</h1>
+            <p class="subtitle">甚至™纯静态？？<del>能用握持</del>，所以不保证不会频繁的遇到CORS问题，生产使用最好还是去用后端版本，前端版本功能不全(如你所见这应该是全球第一个纯静态phi查分器)
+        </header>
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">输入参数</h2>
+                <div class="form-group">
+                    <label for="sessionToken">SessionToken</label>
+                    <input type="text" id="sessionToken" placeholder="请输入你的SessionToken">
+                </div>
+                <div class="number-inputs">
+                    <div class="form-group">
+                        <label for="pCount">P数 (Phi成绩数量)</label>
+                        <input type="number" id="pCount" min="0" max="999" value="3">
+                    </div>
+                    <div class="form-group">
+                        <label for="bCount">B数 (Best成绩数量)</label>
+                        <input type="number" id="bCount" min="0" max="999" value="30">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="selfIntro">自我介绍 (可选)</label>
+                    <textarea id="selfIntro" placeholder="在此处输入自我介绍，将显示在标题下方"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="customText">自定义文案 (可选)</label>
+                    <textarea id="customText" placeholder="在此处输入自定义文案，将显示在图片底部"></textarea>
+                </div>
+                <div class="options-group">
+                    <h4>显示选项</h4>
+                    <div class="checkbox-row">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="showRawData" checked>
+                            <label for="showRawData">显示原始数据</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="autoDownload">
+                            <label for="autoDownload">自动下载图片</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="showChapterProgress" checked>
+                            <label for="showChapterProgress">章节解锁进度</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="showCollectionProgress" checked>
+                            <label for="showCollectionProgress">收集品进度</label>
+                        </div>
+                    </div>
+                </div>
+                <button id="generateBtn" class="btn">生成B图片</button>
+            </div>
+            <div class="output-section">
+                <h2 class="section-title">输出结果</h2>
+                <div class="tabs">
+                    <div class="tab active" data-tab="image">图片预览</div>
+                    <div class="tab" data-tab="data">原始数据</div>
+                    <div class="tab" data-tab="info">玩家信息</div>
+                </div>
+                <div class="tab-content active" id="image-tab">
+                    <div class="progress-container">
+                        <div id="progressText" class="progress-text">准备开始...</div>
+                        <div class="progress-bar">
+                            <div id="progressFill" class="progress-fill" style="width:0"></div>
+                        </div>
+                    </div>
+                    <div class="output-container">
+                        <div class="loading" id="loadingText" style="display:none">正在生成图片，请稍候...</div>
+                        <div class="image-container" id="imageContainer"></div>
+                    </div>
+                </div>
+                <div class="tab-content" id="data-tab">
+                    <div class="output-container">
+                        <div class="raw-data">
+                            <pre id="rawData">数据将在这里显示...</pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content" id="info-tab">
+                    <div class="output-container">
+                        <div class="raw-data">
+                            <pre id="playerInfo">玩家信息将在这里显示...</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="instructions">
+            <h3>使用说明</h3>
+            <ul>
+                <li><strong>SessionToken</strong>: 手机内部存储/Android/data/com.PigeonGames.Phigros/里面搜索.userdata文件打开，找到sessiontoken对应的value，里面就是SessionToken，25位字母数字组合</li>
+                <li><strong>P数</strong>: 想要显示的Phi(AP)成绩数量，通常为0-3个</li>
+                <li><strong>B数</strong>: 想要显示的Best成绩数量，通常为30个(B30)</li>
+                <li>B27以外的成绩会用"OVER FLOW"分隔显示</li>
+                <li>图片包含玩家昵称、RKS、头像、统计信息和详细的成绩卡片</li>
+                <li>每张成绩卡片显示曲绘、曲名、分数、评级、定数、单曲RKS、ACC和推分建议</li>
+                <li><strong>章节解锁进度</strong>: 显示各章节的解锁状态（可选）</li>
+                <li><strong>收集品进度</strong>: 显示收集品的完成情况（可选）</li>
+                <li><strong>自我介绍</strong>: 可自定义显示在标题下方的介绍文字</li>
+            </ul>
+        </div>
+        <footer>
+            <p>© 2025 TeinxictionMC</p>
+            <p>Generated by TeinxictionMC</p>
+        </footer>
+    </div>
+
+    <script>
+        // Phigros API 封装
+        window.PhigrosAPI = {
+            decryptAES: async function(encryptedData) {
+                const keyStr = "6Jaa0qVAJZuXkZCLiOa/Ax5tIZVu+taKUN1V1nqwkks=";
+                const ivStr = "Kk/wisgNYwcAV8WVGMgyUw==";
+                try {
+                    const key = Uint8Array.from(atob(keyStr), c => c.charCodeAt(0));
+                    const iv = Uint8Array.from(atob(ivStr), c => c.charCodeAt(0));
+                    const importedKey = await crypto.subtle.importKey("raw", key, "AES-CBC", false, ["decrypt"]);
+                    const decrypted = await crypto.subtle.decrypt({ name: "AES-CBC", iv: iv }, importedKey, encryptedData);
+                    return new Uint8Array(decrypted);
+                } catch (error) {
+                    throw new Error("AES解密失败:" + error.message);
+                }
+            },
+            
+            readVarInt: function(bytes, offset) {
+                let result = 0;
+                let shift = 0;
+                let byte;
+                do {
+                    byte = bytes[offset++];
+                    result |= (byte & 0x7F) << shift;
+                    shift += 7;
+                } while (byte & 0x80);
+                return { value: result, offset: offset };
+            },
+            
+            readString: function(bytes, offset) {
+                const lengthResult = this.readVarInt(bytes, offset);
+                const length = lengthResult.value;
+                offset = lengthResult.offset;
+                const str = new TextDecoder("utf-8").decode(bytes.slice(offset, offset + length));
+                return { str: str, offset: offset + length };
+            },
+            
+            readBit: function(byte, bitIndex) {
+                return (byte >> bitIndex) & 1;
+            },
+            
+            parseSummary: function(summaryData) {
+                const view = new DataView(summaryData);
+                let offset = 0;
+                
+                const saveVersion = view.getUint8(offset++);
+                const challenge = view.getUint16(offset, true);
+                offset += 2;
+                const rks = view.getFloat32(offset, true);
+                offset += 4;
+                const gameVersion = view.getUint8(offset++);
+                
+                const avatarLength = view.getUint8(offset++);
+                const avatarBytes = summaryData.slice(offset, offset + avatarLength);
+                offset += avatarLength;
+                const avatar = new TextDecoder('utf-8').decode(avatarBytes);
+                
+                const EZ = [view.getUint16(offset, true), view.getUint16(offset + 2, true), view.getUint16(offset + 4, true)];
+                offset += 6;
+                const HD = [view.getUint16(offset, true), view.getUint16(offset + 2, true), view.getUint16(offset + 4, true)];
+                offset += 6;
+                const IN = [view.getUint16(offset, true), view.getUint16(offset + 2, true), view.getUint16(offset + 4, true)];
+                offset += 6;
+                const AT = [view.getUint16(offset, true), view.getUint16(offset + 2, true), view.getUint16(offset + 4, true)];
+                offset += 6;
+                
+                return {
+                    saveVersion,
+                    challenge,
+                    rks,
+                    gameVersion,
+                    avatar,
+                    EZ,
+                    HD,
+                    IN,
+                    AT
+                };
+            },
+            
+            parseGameProgress: async function(gameProgressData) {
+                try {
+                    if (gameProgressData[0] === 0x04 || gameProgressData[0] === 0x03) {
+                        const decrypted = await this.decryptAES(gameProgressData.slice(1));
+                        let offset = 0;
+                        
+                        const isFirstRun = this.readBit(decrypted[offset], 0);
+                        const legacyChapterFinished = this.readBit(decrypted[offset], 1);
+                        const alreadyShowCollectionTip = this.readBit(decrypted[offset], 2);
+                        const alreadyShowAutoUnlockINTip = this.readBit(decrypted[offset], 3);
+                        offset++;
+                        
+                        const completedResult = this.readString(decrypted, offset);
+                        const completed = completedResult.str;
+                        offset = completedResult.offset;
+                        
+                        const songUpdateInfoResult = this.readVarInt(decrypted, offset);
+                        const songUpdateInfo = songUpdateInfoResult.value;
+                        offset = songUpdateInfoResult.offset;
+                        
+                        const challengeModeRank = decrypted[offset] | (decrypted[offset + 1] << 8);
+                        offset += 2;
+                        
+                        const moneyResult1 = this.readVarInt(decrypted, offset);
+                        const money1 = moneyResult1.value;
+                        offset = moneyResult1.offset;
+                        const moneyResult2 = this.readVarInt(decrypted, offset);
+                        const money2 = moneyResult2.value;
+                        offset = moneyResult2.offset;
+                        const moneyResult3 = this.readVarInt(decrypted, offset);
+                        const money3 = moneyResult3.value;
+                        offset = moneyResult3.offset;
+                        const moneyResult4 = this.readVarInt(decrypted, offset);
+                        const money4 = moneyResult4.value;
+                        offset = moneyResult4.offset;
+                        const moneyResult5 = this.readVarInt(decrypted, offset);
+                        const money5 = moneyResult5.value;
+                        offset = moneyResult5.offset;
+                        
+                        const money = [money1, money2, money3, money4, money5];
+                        
+                        const unlockFlagOfSpasmodic = [];
+                        for (let i = 0; i < 4; i++) {
+                            unlockFlagOfSpasmodic.push(this.readBit(decrypted[offset], i));
+                        }
+                        offset++;
+                        
+                        const unlockFlagOfIgallta = [];
+                        for (let i = 0; i < 4; i++) {
+                            unlockFlagOfIgallta.push(this.readBit(decrypted[offset], i));
+                        }
+                        offset++;
+                        
+                        const unlockFlagOfRrharil = [];
+                        for (let i = 0; i < 4; i++) {
+                            unlockFlagOfRrharil.push(this.readBit(decrypted[offset], i));
+                        }
+                        offset++;
+                        
+                        const flagOfSongRecordKey = decrypted[offset++];
+                        
+                        const randomVersionUnlocked = [];
+                        for (let i = 0; i < 6; i++) {
+                            randomVersionUnlocked.push(this.readBit(decrypted[offset], i));
+                        }
+                        offset++;
+                        
+                        const chapter8UnlockBegin = this.readBit(decrypted[offset], 0);
+                        const chapter8UnlockSecondPhase = this.readBit(decrypted[offset], 1);
+                        const chapter8Passed = this.readBit(decrypted[offset], 2);
+                        offset++;
+                        
+                        const chapter8SongUnlocked = [];
+                        for (let i = 0; i < 6; i++) {
+                            chapter8SongUnlocked.push(this.readBit(decrypted[offset], i));
+                        }
+                        offset++;
+                        
+                        let flagOfSongRecordKeyTakumi = [];
+                        if (gameProgressData[0] === 0x04 && offset < decrypted.length) {
+                            for (let i = 0; i < 3; i++) {
+                                flagOfSongRecordKeyTakumi.push(this.readBit(decrypted[offset], i));
+                            }
+                            offset++;
+                        }
+                        
+                        return {
+                            success: true,
+                            isFirstRun: isFirstRun === 1,
+                            legacyChapterFinished: legacyChapterFinished === 1,
+                            alreadyShowCollectionTip: alreadyShowCollectionTip === 1,
+                            alreadyShowAutoUnlockINTip: alreadyShowAutoUnlockINTip === 1,
+                            completed: completed,
+                            songUpdateInfo: songUpdateInfo,
+                            challengeModeRank: challengeModeRank,
+                            money: money,
+                            unlockFlagOfSpasmodic: unlockFlagOfSpasmodic,
+                            unlockFlagOfIgallta: unlockFlagOfIgallta,
+                            unlockFlagOfRrharil: unlockFlagOfRrharil,
+                            flagOfSongRecordKey: flagOfSongRecordKey,
+                            randomVersionUnlocked: randomVersionUnlocked,
+                            chapter8UnlockBegin: chapter8UnlockBegin === 1,
+                            chapter8UnlockSecondPhase: chapter8UnlockSecondPhase === 1,
+                            chapter8Passed: chapter8Passed === 1,
+                            chapter8SongUnlocked: chapter8SongUnlocked,
+                            flagOfSongRecordKeyTakumi: flagOfSongRecordKeyTakumi
+                        };
+                    }
+                    return { success: false, error: "不支持的gameProgress版本" };
+                } catch (error) {
+                    return { success: false, error: "解析失败:" + error.message };
+                }
+            },
+            
+            parseUserData: async function(userData) {
+                try {
+                    if (userData[0] === 0x01) {
+                        const decrypted = await this.decryptAES(userData.slice(1));
+                        let offset = 0;
+                        
+                        const showPlayerId = decrypted[offset++];
+                        
+                        const selfIntroResult = this.readString(decrypted, offset);
+                        const selfIntro = selfIntroResult.str;
+                        offset = selfIntroResult.offset;
+                        
+                        const avatarResult = this.readString(decrypted, offset);
+                        const avatar = avatarResult.str;
+                        offset = avatarResult.offset;
+                        
+                        const backgroundResult = this.readString(decrypted, offset);
+                        const background = backgroundResult.str;
+                        offset = backgroundResult.offset;
+                        
+                        return {
+                            success: true,
+                            showPlayerId: showPlayerId,
+                            selfIntro: selfIntro,
+                            avatar: avatar,
+                            background: background
+                        };
+                    }
+                    return { success: false, error: "不支持的user版本" };
+                } catch (error) {
+                    return { success: false, error: "解析失败:" + error.message };
+                }
+            },
+            
+            getNickname: async function(sessionToken) {
+                try {
+                    const response = await fetch("https://rak3ffdi.cloud.tds1.tapapis.cn/1.1/users/me", {
+                        headers: {
+                            "X-LC-Id": "rAK3FfdieFob2Nn8Am",
+                            "X-LC-Key": "Qr9AEqtuoSVS3zeD6iVbM4ZC0AtkJcQ89tywVyi0",
+                            "X-LC-Session": sessionToken
+                        }
+                    });
+                    const data = await response.json();
+                    return data.nickname || "GUEST";
+                } catch {
+                    return "ERROR";
+                }
+            },
+            
+            getSummary: async function(sessionToken) {
+                try {
+                    const response = await fetch("https://rak3ffdi.cloud.tds1.tapapis.cn/1.1/classes/_GameSave?limit=1", {
+                        headers: {
+                            "X-LC-Id": "rAK3FfdieFob2Nn8Am",
+                            "X-LC-Key": "Qr9AEqtuoSVS3zeD6iVbM4ZC0AtkJcQ89tywVyi0",
+                            "X-LC-Session": sessionToken
+                        }
+                    });
+                    const data = await response.json();
+                    
+                    if (!data.results || data.results.length === 0) {
+                        return { error: "没有找到存档数据" };
+                    }
+                    
+                    const saveData = data.results[0];
+                    const summaryBase64 = saveData.summary;
+                    const summaryBytes = Uint8Array.from(atob(summaryBase64), c => c.charCodeAt(0));
+                    const summary = this.parseSummary(summaryBytes.buffer);
+                    
+                    return {
+                        success: true,
+                        summary: summary,
+                        updateAt: saveData.updatedAt,
+                        checksum: saveData.gameFile?.metaData?._checksum,
+                        url: saveData.gameFile?.url
+                    };
+                } catch (error) {
+                    return { error: "请求失败", message: error.message };
+                }
+            },
+            
+            parseGameRecord: async function(gameRecordData) {
+                try {
+                    if (gameRecordData[0] !== 1) return { error: "错误的gameRecord文件头" };
+                    const decrypted = await this.decryptAES(gameRecordData.slice(1));
+                    const difficultyNames = ["EZ", "HD", "IN", "AT", "Legacy"];
+                    
+                    const songCountResult = this.readVarInt(decrypted, 0);
+                    let offset = songCountResult.offset;
+                    const songs = [];
+                    
+                    for (let i = 0; i < songCountResult.value && offset < decrypted.length; i++) {
+                        const idResult = this.readString(decrypted, offset);
+                        const songId = idResult.str;
+                        offset = idResult.offset;
+                        
+                        const lengthResult = this.readVarInt(decrypted, offset);
+                        const songLength = lengthResult.value;
+                        offset = lengthResult.offset;
+                        
+                        const songEnd = offset + songLength;
+                        const unlockedDifficultiesByte = decrypted[offset++];
+                        const fcByte = decrypted[offset++];
+                        
+                        const song = {
+                            id: songId.replace(/\.0$/, ""),
+                            unlockedDifficulties: [],
+                            scores: {}
+                        };
+                        
+                        for (let diff = 0; diff < 5; diff++) {
+                            if (this.readBit(unlockedDifficultiesByte, diff) === 1) {
+                                const diffName = difficultyNames[diff];
+                                song.unlockedDifficulties.push(diffName);
+                                
+                                const score = decrypted[offset] | decrypted[offset + 1] << 8 | decrypted[offset + 2] << 16 | decrypted[offset + 3] << 24;
+                                offset += 4;
+                                
+                                const accuracyBuffer = new ArrayBuffer(4);
+                                const accuracyView = new DataView(accuracyBuffer);
+                                for (let j = 0; j < 4; j++) accuracyView.setUint8(j, decrypted[offset + j]);
+                                const accuracy = accuracyView.getFloat32(0, true);
+                                offset += 4;
+                                
+                                song.scores[diffName] = {
+                                    score: score,
+                                    accuracy: accuracy,
+                                    fullCombo: this.readBit(fcByte, diff) === 1
+                                };
+                            }
+                        }
+                        
+                        songs.push(song);
+                        offset = songEnd;
+                    }
+                    
+                    return {
+                        success: songs.length > 0,
+                        totalSongs: songCountResult.value,
+                        songs: songs
+                    };
+                } catch (error) {
+                    return { error: "解析失败:" + error.message };
+                }
+            },
+            
+            parseGameKey: async function(gameKeyData) {
+                try {
+                    if (gameKeyData[0] === 0x03 || gameKeyData[0] === 0x02) {
+                        const decrypted = await this.decryptAES(gameKeyData.slice(1));
+                        let offset = 0;
+                        
+                        const keyCountResult = this.readVarInt(decrypted, offset);
+                        const keyCount = keyCountResult.value;
+                        offset = keyCountResult.offset;
+                        
+                        const keyList = {};
+                        
+                        for (let i = 0; i < keyCount; i++) {
+                            const keyNameResult = this.readString(decrypted, offset);
+                            const keyName = keyNameResult.str;
+                            offset = keyNameResult.offset;
+                            
+                            const dataLength = decrypted[offset++];
+                            
+                            const typeBits = decrypted[offset++];
+                            const type = [];
+                            for (let j = 0; j < 5; j++) {
+                                type.push(this.readBit(typeBits, j));
+                            }
+                            
+                            const flag = [];
+                            for (let j = 0; j < dataLength - 1; j++) {
+                                flag.push(decrypted[offset++]);
+                            }
+                            
+                            keyList[keyName] = {
+                                type: type,
+                                flag: flag
+                            };
+                        }
+                        
+                        const lanotaReadKeys = [];
+                        const lanotaByte = decrypted[offset++];
+                        for (let i = 0; i < 6; i++) {
+                            lanotaReadKeys.push(this.readBit(lanotaByte, i));
+                        }
+                        
+                        const camelliaReadKey = this.readBit(decrypted[offset++], 0);
+                        
+                        let sideStory4BeginReadKey = 0;
+                        let oldScoreClearedV390 = 0;
+                        
+                        if (gameKeyData[0] === 0x03 && offset < decrypted.length) {
+                            sideStory4BeginReadKey = decrypted[offset++];
+                            oldScoreClearedV390 = decrypted[offset++];
+                        }
+                        
+                        const collections = {
+                            avatar: 0,
+                            avatarTotal: 0,
+                            illustration: 0,
+                            illustrationTotal: 0,
+                            collection: 0,
+                            collectionTotal: 0,
+                            single: 0,
+                            singleTotal: 0
+                        };
+                        
+                        for (const keyName in keyList) {
+                            const key = keyList[keyName];
+                            const type = key.type;
+                            
+                            if (type[4] === 1) {
+                                collections.avatarTotal++;
+                                if (key.flag.length > 0 && key.flag[0] > 0) {
+                                    collections.avatar++;
+                                }
+                            }
+                            
+                            if (type[3] === 1) {
+                                collections.illustrationTotal++;
+                                if (key.flag.length > 0 && key.flag[0] > 0) {
+                                    collections.illustration++;
+                                }
+                            }
+                            
+                            if (type[2] === 1) {
+                                collections.collectionTotal++;
+                                if (key.flag.length > 0 && key.flag[0] > 0) {
+                                    collections.collection++;
+                                }
+                            }
+                            
+                            if (type[1] === 1) {
+                                collections.singleTotal++;
+                                if (key.flag.length > 0 && key.flag[0] > 0) {
+                                    collections.single++;
+                                }
+                            }
+                        }
+                        
+                        return {
+                            success: true,
+                            keyList: keyList,
+                            lanotaReadKeys: lanotaReadKeys,
+                            camelliaReadKey: camelliaReadKey,
+                            sideStory4BeginReadKey: sideStory4BeginReadKey,
+                            oldScoreClearedV390: oldScoreClearedV390,
+                            collections: collections
+                        };
+                    }
+                    return { success: false, error: "不支持的gameKey版本" };
+                } catch (error) {
+                    return { success: false, error: "解析失败:" + error.message };
+                }
+            },
+            
+            getFullArchive: async function(sessionToken) {
+                try {
+                    const nickname = await this.getNickname(sessionToken);
+                    const summaryResult = await this.getSummary(sessionToken);
+                    
+                    if (summaryResult.error) {
+                        return { 
+                            error: summaryResult.error, 
+                            message: summaryResult.message,
+                            nickname: nickname 
+                        };
+                    }
+                    
+                    if (!summaryResult.url) {
+                        return { 
+                            error: "存档中没有gameFile URL",
+                            nickname: nickname 
+                        };
+                    }
+                    
+                    const gameFileResponse = await fetch(summaryResult.url);
+                    const gameFileData = await gameFileResponse.arrayBuffer();
+                    
+                    const JSZip = await this.loadJSZip();
+                    const zip = await JSZip.loadAsync(gameFileData);
+                    
+                    const archive = {
+                        success: true,
+                        timestamp: new Date().toISOString(),
+                        nickname: nickname,
+                        summary: summaryResult.summary
+                    };
+                    
+                    if (zip.files.user) {
+                        const userData = await zip.files.user.async("uint8array");
+                        archive.user = await this.parseUserData(userData);
+                    }
+                    
+                    if (zip.files.gameProgress) {
+                        const gameProgressData = await zip.files.gameProgress.async("uint8array");
+                        archive.gameProgress = await this.parseGameProgress(gameProgressData);
+                    }
+                    
+                    if (zip.files.gameKey) {
+                        const gameKeyData = await zip.files.gameKey.async("uint8array");
+                        archive.gameKey = await this.parseGameKey(gameKeyData);
+                    }
+                    
+                    if (zip.files.gameRecord) {
+                        const gameRecordData = await zip.files.gameRecord.async("uint8array");
+                        archive.gameRecord = await this.parseGameRecord(gameRecordData);
+                    }
+                    
+                    return archive;
+                } catch (error) {
+                    return { 
+                        error: "处理存档失败", 
+                        message: error.message 
+                    };
+                }
+            },
+            
+            loadJSZip: async function() {
+                if (window.JSZip) return window.JSZip;
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement("script");
+                    script.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+                    script.onload = () => resolve(window.JSZip);
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
+        };
+
+        // 进度管理器
+        const ProgressManager = {
+            currentStep: 0,
+            totalSteps: 0,
+            steps: [],
+            renderProgress: 0,
+            totalRenderItems: 0,
+            renderedItems: 0,
+            
+            init: function(steps) {
+                this.steps = steps;
+                this.totalSteps = steps.length;
+                this.currentStep = 0;
+                this.renderProgress = 0;
+                this.totalRenderItems = 0;
+                this.renderedItems = 0;
+                this.updateProgress();
+            },
+            
+            nextStep: function() {
+                this.currentStep++;
+                this.renderProgress = 0;
+                this.updateProgress();
+            },
+            
+            setRenderProgress: function(rendered, total) {
+                this.renderedItems = rendered;
+                this.totalRenderItems = total;
+                this.renderProgress = total > 0 ? (rendered / total) * 100 : 0;
+                this.updateProgress();
+            },
+            
+            updateProgress: function() {
+                const progressFill = document.getElementById('progressFill');
+                const progressText = document.getElementById('progressText');
+                
+                if (this.currentStep >= this.totalSteps) {
+                    progressFill.style.width = '100%';
+                    progressText.textContent = '完成！';
+                    return;
+                }
+                
+                const basePercentage = (this.currentStep / this.totalSteps) * 100;
+                const stepPercentage = (this.renderProgress / this.totalSteps);
+                const totalPercentage = basePercentage + stepPercentage;
+                
+                const stepName = this.steps[this.currentStep];
+                let progressTextContent = `步骤：${stepName} ${totalPercentage.toFixed(2)}%`;
+                
+                if (this.totalRenderItems > 0) {
+                    progressTextContent += ` (${this.renderedItems}/${this.totalRenderItems})`;
+                }
+                
+                progressFill.style.width = `${totalPercentage}%`;
+                progressText.textContent = progressTextContent;
+            }
+        };
+
+        // 计算单曲RKS
+        function calculateSingleRKS(acc, level) {
+            if (acc < 70) return 0;
+            if (acc === 70) return level / 9;
+            return Math.pow((acc - 55) / 45, 2) * level;
+        }
+
+        // 获取推分建议
+        function getImprovementSuggestion(currentAcc, currentRKS, level) {
+            if (currentAcc >= 100) return "无法推分";
+            const targetRKS = currentRKS + 0.01;
+            if (targetRKS > level) return "无法推分";
+            let testAcc = currentAcc + 0.01;
+            while (testAcc <= 100) {
+                if (calculateSingleRKS(testAcc, level) >= targetRKS) {
+                    return `推分建议：${testAcc.toFixed(2)}%`;
+                }
+                testAcc += 0.01;
+            }
+            return "无法推分";
+        }
+
+        // 获取评级
+        function getRank(score, isFC) {
+            if (score === 1000000) return "AP";
+            if (isFC) return "FC";
+            if (score >= 960000) return "V";
+            if (score >= 920000) return "S";
+            if (score >= 880000) return "A";
+            if (score >= 820000) return "B";
+            if (score >= 700000) return "C";
+            return "F";
+        }
+
+        // 格式化课题模式显示
+        function formatChallenge(challenge) {
+            try {
+                const challengeStr = challenge.toString();
+                if (challengeStr.length === 0) return "0";
+                
+                const firstDigit = parseInt(challengeStr[0]);
+                if (firstDigit < 1 || firstDigit > 5) return "0";
+                
+                const remaining = challengeStr.length > 1 ? challengeStr.substring(1) : "0";
+                
+                const colorMap = {
+                    1: "绿",
+                    2: "蓝", 
+                    3: "红",
+                    4: "金",
+                    5: "彩"
+                };
+                
+                return `${colorMap[firstDigit]}${remaining}`;
+            } catch {
+                return "0";
+            }
+        }
+
+        // 获取章节解锁进度文本
+        function getChapterProgressText(gameProgress) {
+            if (!gameProgress || !gameProgress.success) return "无法获取章节进度";
+            
+            const chapters = [];
+            
+            if (gameProgress.legacyChapterFinished) {
+                chapters.push("主线：已完成");
+            } else {
+                chapters.push("主线：进行中");
+            }
+            
+            if (gameProgress.chapter8Passed) {
+                chapters.push("第8章：已完成");
+            } else if (gameProgress.chapter8UnlockSecondPhase) {
+                chapters.push("第8章：第二阶段");
+            } else if (gameProgress.chapter8UnlockBegin) {
+                chapters.push("第8章：已入场");
+            } else {
+                chapters.push("第8章：未解锁");
+            }
+            
+            const spasmodicUnlocked = gameProgress.unlockFlagOfSpasmodic.filter(x => x === 1).length;
+            chapters.push(`Spasmodic：${spasmodicUnlocked}/4`);
+            
+            const igalltaUnlocked = gameProgress.unlockFlagOfIgallta.filter(x => x === 1).length;
+            chapters.push(`Igallta：${igalltaUnlocked}/4`);
+            
+            const rrharilUnlocked = gameProgress.unlockFlagOfRrharil.filter(x => x === 1).length;
+            chapters.push(`Rrhar'il：${rrharilUnlocked}/4`);
+            
+            return chapters.join("\n");
+        }
+
+        // 获取收集品进度文本
+        function getCollectionProgressText(gameKey) {
+            if (!gameKey || !gameKey.success) return "无法获取收集品进度";
+            
+            const collections = gameKey.collections;
+            return [
+                `头像：${collections.avatar}/${collections.avatarTotal}`,
+                `背景：${collections.illustration}/${collections.illustrationTotal}`,
+                `收藏品：${collections.collection}/${collections.collectionTotal}`,
+                `单曲：${collections.single}/${collections.singleTotal}`
+            ].join("\n");
+        }
+
+        // 获取定数和歌曲名称数据
+        async function getDifficultyData() {
+            try {
+                const response = await fetch("https://corsproxy.io/https://killkpa.miraheze.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=PhiData/chartData.json");
+                const data = await response.json();
+                const pages = data.query.pages;
+                
+                for (const pageId in pages) {
+                    const page = pages[pageId];
+                    if (page.revisions && page.revisions[0]) {
+                        try {
+                            const wikiText = page.revisions[0]["*"];
+                            return JSON.parse(wikiText.trim());
+                        } catch (error) {
+                            console.warn("解析定数数据失败:", error);
+                            return {};
+                        }
+                    }
+                }
+                return {};
+            } catch (error) {
+                console.warn("获取定数数据失败:", error);
+                return {};
+            }
+        }
+
+        // 获取所有谱面图片
+        async function getAllSongImages() {
+            try {
+                const response = await fetch("https://corsproxy.io/https://killkpa.miraheze.org/w/api.php?action=query&generator=images&titles=%E8%B0%B1%E9%9D%A2%E5%88%97%E8%A1%A8&prop=imageinfo&iiprop=url&format=json&gimlimit=max");
+                const data = await response.json();
+                
+                if (!data.query || !data.query.pages) {
+                    console.warn("获取图片数据失败");
+                    return {};
+                }
+                
+                const imageMap = {};
+                const pages = data.query.pages;
+                
+                for (const pageId in pages) {
+                    const page = pages[pageId];
+                    if (parseInt(pageId) < 0) continue;
+                    
+                    if (page.imageinfo && page.imageinfo[0] && page.imageinfo[0].url) {
+                        const title = page.title;
+                        if (title.startsWith("File:")) {
+                            const fileName = title.substring(5);
+                            const url = page.imageinfo[0].url;
+                            imageMap[fileName] = url;
+                        }
+                    }
+                }
+                
+                console.log("获取到图片数量:", Object.keys(imageMap).length);
+                return imageMap;
+            } catch (error) {
+                console.warn("获取图片数据失败:", error);
+                return {};
+            }
+        }
+
+        // 根据songId查找对应的图片文件名
+        function findSongImage(songId, imageMap) {
+            if (!imageMap) return null;
+            
+            const searchKeys = [
+                songId,
+                songId.replace(/\.\w+$/, ''),
+                songId.split('.')[0]
+            ];
+            
+            for (const fileName in imageMap) {
+                const baseName = fileName.replace(/\.png$/i, '');
+                
+                for (const searchKey of searchKeys) {
+                    if (searchKey && baseName.includes(searchKey)) {
+                        return imageMap[fileName];
+                    }
+                }
+                
+                if (songId.includes(baseName.split('.')[0])) {
+                    return imageMap[fileName];
+                }
+            }
+            
+            return null;
+        }
+
+        // 根据songId在difficultyData中查找歌曲
+        function findSongData(songId, difficultyData) {
+            if (!difficultyData) return null;
+            
+            const searchKeys = [
+                songId,
+                songId.replace(/\.\w+$/, ''),
+                songId.split('.')[0]
+            ];
+            
+            for (const key in difficultyData) {
+                const songData = difficultyData[key];
+                
+                for (const searchKey of searchKeys) {
+                    if (searchKey && key.includes(searchKey)) {
+                        return { ...songData, dataKey: key };
+                    }
+                }
+                
+                if (songData.name) {
+                    for (const searchKey of searchKeys) {
+                        if (searchKey && songData.name.includes(searchKey)) {
+                            return { ...songData, dataKey: key };
+                        }
+                    }
+                }
+            }
+            
+            return null;
+        }
+
+        // 改进的图片加载函数 - 添加超时和错误处理
+        async function loadImageToCanvas(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                
+                // 设置超时
+                const timeoutId = setTimeout(() => {
+                    console.warn("图片加载超时:", url);
+                    resolve(null);
+                }, 5000); // 5秒超时
+                
+                img.onload = () => {
+                    clearTimeout(timeoutId);
+                    console.log("图片加载成功:", url);
+                    resolve(img);
+                };
+                
+                img.onerror = () => {
+                    clearTimeout(timeoutId);
+                    console.warn("图片加载失败:", url);
+                    resolve(null);
+                };
+                
+                img.src = url;
+            });
+        }
+
+        // 批量加载图片，限制并发数
+        async function batchLoadImages(imageUrls, maxConcurrent = 5) {
+            const results = {};
+            const urls = [...imageUrls];
+            
+            // 分批加载
+            for (let i = 0; i < urls.length; i += maxConcurrent) {
+                const batch = urls.slice(i, i + maxConcurrent);
+                const promises = batch.map(async (item) => {
+                    try {
+                        const img = await loadImageToCanvas(item.url);
+                        if (img) {
+                            results[item.score.uniqueKey] = img;
+                        }
+                        return { success: true, key: item.score.uniqueKey };
+                    } catch (error) {
+                        console.warn("加载图片失败:", item.url, error);
+                        return { success: false, key: item.score.uniqueKey };
+                    }
+                });
+                
+                await Promise.all(promises);
+                // 更新进度
+                ProgressManager.setRenderProgress(Object.keys(results).length, imageUrls.length);
+            }
+            
+            return results;
+        }
+
+        // 主函数：生成B图片
+        async function generateBImage() {
+            const sessionToken = document.getElementById("sessionToken").value.trim();
+            const pCount = parseInt(document.getElementById("pCount").value);
+            const bCount = parseInt(document.getElementById("bCount").value);
+            const selfIntro = document.getElementById("selfIntro").value;
+            const customText = document.getElementById("customText").value;
+            const showRawData = document.getElementById("showRawData").checked;
+            const autoDownload = document.getElementById("autoDownload").checked;
+            const showChapterProgress = document.getElementById("showChapterProgress").checked;
+            const showCollectionProgress = document.getElementById("showCollectionProgress").checked;
+            
+            if (!sessionToken) {
+                alert("请输入Session Token！");
+                return;
+            }
+            if (pCount < 0 || pCount > 999) {
+                alert("P数必须在0-999之间！");
+                return;
+            }
+            if (bCount < 0 || bCount > 999) {
+                alert("B数必须在0-999之间！");
+                return;
+            }
+            
+            document.getElementById("loadingText").style.display = "block";
+            document.getElementById("imageContainer").innerHTML = "";
+            
+            const progressSteps = [
+                "初始化",
+                "获取玩家数据",
+                "获取定数数据",
+                "获取谱面图片",
+                "处理游戏数据",
+                "排序成绩数据",
+                "计算统计数据",
+                "准备Canvas画布",
+                "绘制基础背景",
+                "绘制玩家信息",
+                "绘制统计表格",
+                "绘制章节进度",
+                "绘制收集品进度",
+                "预加载曲绘图片",
+                "绘制Phi成绩卡片",
+                "绘制Best成绩卡片",
+                "绘制自定义文案",
+                "绘制水印信息",
+                "完成图片生成"
+            ];
+            
+            ProgressManager.init(progressSteps);
+            
+            try {
+                ProgressManager.nextStep();
+                ProgressManager.nextStep();
+                const archive = await window.PhigrosAPI.getFullArchive(sessionToken);
+                if (archive.error) throw new Error(archive.error);
+                
+                ProgressManager.nextStep();
+                const difficultyData = await getDifficultyData();
+                
+                ProgressManager.nextStep();
+                const imageMap = await getAllSongImages();
+                
+                if (showRawData) {
+                    document.getElementById("rawData").textContent = JSON.stringify(archive, null, 2);
+                    document.getElementById("playerInfo").textContent = JSON.stringify({
+                        nickname: archive.nickname,
+                        timestamp: archive.timestamp,
+                        summary: archive.summary,
+                        user: archive.user,
+                        gameProgress: archive.gameProgress,
+                        gameKey: archive.gameKey,
+                        songCount: archive.gameRecord?.songs?.length || 0
+                    }, null, 2);
+                }
+                
+                if (!archive.gameRecord || !archive.gameRecord.songs) {
+                    throw new Error("没有找到游戏记录数据");
+                }
+                
+                ProgressManager.nextStep();
+                const songs = archive.gameRecord.songs;
+                const nickname = archive.nickname || "未知玩家";
+                const summary = archive.summary || {};
+                const rks = summary.rks || 0;
+                const challenge = summary.challenge || 0;
+                const user = archive.user || {};
+                const gameProgress = archive.gameProgress || {};
+                const gameKey = archive.gameKey || {};
+                
+                const displaySelfIntro = selfIntro || (user.success ? user.selfIntro : "");
+                
+                const allScores = [];
+                
+                songs.forEach(song => {
+                    const songId = song.id;
+                    const scores = song.scores || {};
+                    
+                    const songData = findSongData(songId, difficultyData);
+                    const songName = songData ? songData.name || songId : songId;
+                    
+                    Object.keys(scores).forEach(diff => {
+                        const scoreData = scores[diff];
+                        const score = scoreData.score;
+                        const acc = scoreData.accuracy;
+                        const fc = scoreData.fullCombo;
+                        
+                        let level = 0;
+                        if (songData) {
+                            const diffLower = diff.toLowerCase();
+                            if (songData[diffLower] && songData[diffLower].level) {
+                                level = parseFloat(songData[diffLower].level) || 0;
+                            }
+                        }
+                        
+                        const singleRKS = calculateSingleRKS(acc, level);
+                        allScores.push({
+                            songId: songId,
+                            difficulty: diff,
+                            level: level,
+                            score: score,
+                            acc: acc,
+                            fc: fc,
+                            singleRKS: singleRKS,
+                            isAP: score === 1000000,
+                            songName: songName,
+                            uniqueKey: `${songId}_${diff}`,
+                            imageUrl: findSongImage(songId, imageMap)
+                        });
+                    });
+                });
+                
+                ProgressManager.nextStep();
+                const phiScores = allScores.filter(score => score.isAP)
+                    .sort((a, b) => b.level - a.level)
+                    .slice(0, pCount);
+                const bestScores = [...allScores].sort((a, b) => b.singleRKS - a.singleRKS)
+                    .slice(0, bCount);
+                
+                ProgressManager.nextStep();
+                const stats = {
+                    EZ: summary.EZ || [0, 0, 0],
+                    HD: summary.HD || [0, 0, 0],
+                    IN: summary.IN || [0, 0, 0],
+                    AT: summary.AT || [0, 0, 0]
+                };
+                
+                ProgressManager.nextStep();
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+                const width = 1200;
+                
+                let baseHeight = 400;
+                if (displaySelfIntro) {
+                    const introLines = Math.ceil(displaySelfIntro.length / 50);
+                    baseHeight += introLines * 25;
+                }
+                
+                // 动态计算高度
+                const phiRows = Math.max(1, Math.ceil(phiScores.length / 3));
+                const b27Rows = Math.max(1, Math.ceil(Math.min(27, bestScores.length) / 3));
+                const overflowRows = Math.max(1, Math.ceil(Math.max(0, bestScores.length - 27) / 3));
+                
+                const sectionSpacing = 60; // 各部分的间距
+                const cardHeight = 200; // 每张卡片的高度
+                const rowSpacing = 20; // 行间距
+                
+                let totalHeight = baseHeight + sectionSpacing;
+                
+                if (phiScores.length > 0) {
+                    totalHeight += sectionSpacing + (phiRows * cardHeight) + ((phiRows - 1) * rowSpacing);
+                }
+                
+                if (bestScores.length > 0) {
+                    totalHeight += sectionSpacing * 2; // Best成绩标题 + OVER FLOW标题
+                    totalHeight += (b27Rows * cardHeight) + ((b27Rows - 1) * rowSpacing);
+                    if (bestScores.length > 27) {
+                        totalHeight += sectionSpacing + (overflowRows * cardHeight) + ((overflowRows - 1) * rowSpacing);
+                    }
+                }
+                
+                if (customText) {
+                    totalHeight += 100;
+                }
+                
+                totalHeight += 50; // 水印和其他边距
+                
+                canvas.width = width;
+                canvas.height = Math.max(totalHeight, 1000);
+                
+                ProgressManager.nextStep();
+                ctx.fillStyle = "#1e1e1e";
+                ctx.fillRect(0, 0, width, canvas.height);
+                
+                let yPos = 30;
+                
+                ctx.font = 'bold 36px "Microsoft YaHei"';
+                ctx.fillStyle = "#ffffff";
+                ctx.textAlign = "center";
+                ctx.fillText("Phigros Best成绩统计", width / 2, yPos);
+                yPos += 60;
+                
+                if (displaySelfIntro) {
+    ctx.font = 'bold 18px "Microsoft YaHei"';
+    ctx.fillStyle = "#3498db";  // 标题颜色
+    ctx.textAlign = "center";
+    ctx.fillText("玩家介绍", width / 2, yPos);
+    yPos += 30;
+    
+    ctx.font = '16px "Microsoft YaHei"';
+    ctx.fillStyle = "#a0d0ff";  // 正文颜色
+    ctx.textAlign = "center";
+    
+    const introLines = [];
+    let currentLine = "";
+    for (let i = 0; i < displaySelfIntro.length; i++) {
+        currentLine += displaySelfIntro[i];
+        if (currentLine.length >= 60 || i === displaySelfIntro.length - 1) {
+            introLines.push(currentLine);
+            currentLine = "";
+        }
+    }
+    
+    introLines.forEach(line => {
+        ctx.fillText(line, width / 2, yPos);
+        yPos += 25;
+    });
+    yPos += 10;
+}
+                
+                ProgressManager.nextStep();
+                ctx.textAlign = "left";
+                ctx.font = 'bold 24px "Microsoft YaHei"';
+                ctx.fillStyle = "#ffffff";
+                ctx.fillText(`玩家: ${nickname}`, 50, yPos);
+                ctx.font = '20px "Microsoft YaHei"';
+                ctx.fillText(`RKS: ${rks.toFixed(6)}`, 50, yPos + 35);
+                ctx.fillText(`课题模式: ${formatChallenge(challenge)}`, 50, yPos + 70);
+                ctx.fillText(`头像: ${summary.avatar || "未知"}`, 50, yPos + 105);
+                
+                const statsX = width - 350;
+                const statsY = yPos;
+                const colWidth = 60;
+                const rowHeight = 25;
+                
+                ProgressManager.nextStep();
+                ctx.fillStyle = "rgba(60,60,60,0.8)";
+                ctx.fillRect(statsX, statsY, 4 * colWidth, rowHeight);
+                ctx.font = '16px "Microsoft YaHei"';
+                ctx.fillStyle = "#ffffff";
+                ctx.textAlign = "center";
+                ["", "Clear", "FC", "Phi"].forEach((text, index) => {
+                    ctx.fillText(text, index * colWidth + statsX + colWidth / 2, statsY + rowHeight / 2 + 5);
+                });
+                
+                const difficultyStats = [
+                    { name: "EZ", data: stats.EZ, color: "#00cc00" },
+                    { name: "HD", data: stats.HD, color: "#ffa500" },
+                    { name: "IN", data: stats.IN, color: "#ff0000" },
+                    { name: "AT", data: stats.AT, color: "#a020f0" }
+                ];
+                
+                difficultyStats.forEach((difficulty, index) => {
+                    const rowY = statsY + (index + 1) * rowHeight;
+                    ctx.fillStyle = index % 2 === 0 ? "rgba(50,50,50,0.8)" : "rgba(45,45,45,0.8)";
+                    ctx.fillRect(statsX, rowY, 4 * colWidth, rowHeight);
+                    ctx.fillStyle = difficulty.color;
+                    ctx.fillText(difficulty.name, statsX + colWidth / 2, rowY + rowHeight / 2 + 5);
+                    ctx.fillStyle = "#ffffff";
+                    difficulty.data.forEach((value, i) => {
+                        ctx.fillText(value.toString(), statsX + (i + 1) * colWidth + colWidth / 2, rowY + rowHeight / 2 + 5);
+                    });
+                });
+                
+                ctx.strokeStyle = "#646464";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(statsX - 2, statsY - 2, 4 * colWidth + 4, 5 * rowHeight + 4);
+                
+                yPos += 150;
+                
+                ProgressManager.nextStep();
+                if (showChapterProgress && gameProgress.success) {
+                    const chapterProgressText = getChapterProgressText(gameProgress);
+                    const chapterLines = chapterProgressText.split("\n");
+                    
+                    ctx.font = 'bold 18px "Microsoft YaHei"';
+                    ctx.fillStyle = "#2ecc71";
+                    ctx.textAlign = "left";
+                    ctx.fillText("章节解锁进度:", width - 350, yPos);
+                    
+                    ctx.font = '14px "Microsoft YaHei"';
+                    ctx.fillStyle = "#c8c8c8";
+                    chapterLines.forEach((line, index) => {
+                        ctx.fillText(line, width - 350, yPos + 30 + index * 20);
+                    });
+                }
+                
+                ProgressManager.nextStep();
+                if (showCollectionProgress && gameKey.success) {
+                    const collectionProgressText = getCollectionProgressText(gameKey);
+                    const collectionLines = collectionProgressText.split("\n");
+                    
+                    ctx.font = 'bold 18px "Microsoft YaHei"';
+                    ctx.fillStyle = "#9b59b6";
+                    ctx.textAlign = "left";
+                    ctx.fillText("收集品进度:", width - 350, yPos + 150);
+                    
+                    ctx.font = '14px "Microsoft YaHei"';
+                    ctx.fillStyle = "#c8c8c8";
+                    collectionLines.forEach((line, index) => {
+                        ctx.fillText(line, width - 350, yPos + 180 + index * 20);
+                    });
+                }
+                
+                yPos += 100;
+                
+                ProgressManager.nextStep();
+                // 改进的图片加载逻辑
+                const imagesToLoad = [];
+                const allDisplayScores = [...phiScores, ...bestScores];
+                allDisplayScores.forEach(score => {
+                    if (score.imageUrl) {
+                        imagesToLoad.push({
+                            url: score.imageUrl,
+                            score: score
+                        });
+                    }
+                });
+                
+                let loadedImages = {};
+                if (imagesToLoad.length > 0) {
+                    try {
+                        loadedImages = await batchLoadImages(imagesToLoad, 3); // 限制并发数为3
+                    } catch (error) {
+                        console.warn("图片加载出错，继续执行:", error);
+                        loadedImages = {};
+                    }
+                }
+                
+                ProgressManager.nextStep();
+                if (phiScores.length > 0) {
+                    ctx.font = 'bold 24px "Microsoft YaHei"';
+                    ctx.fillStyle = "#ffd700";
+                    ctx.textAlign = "center";
+                    ctx.fillText("Phi成绩", width / 2, yPos);
+                    yPos += 40;
+                    
+                    for (let i = 0; i < phiScores.length; i++) {
+                        const score = phiScores[i];
+                        const rowIndex = Math.floor(i / 3);
+                        const colIndex = i % 3;
+                        const x = 50 + 380 * colIndex;
+                        const y = yPos + rowIndex * 200;
+                        
+                        // 绘制卡片
+                        ctx.fillStyle = "rgba(50,50,60,0.9)";
+                        ctx.fillRect(x, y, 360, 180);
+                        ctx.strokeStyle = "#ffd700";
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(x, y, 360, 180);
+                        
+                        // 绘制曲绘图片
+                        if (loadedImages[score.uniqueKey]) {
+                            const img = loadedImages[score.uniqueKey];
+                            const imgWidth = 140;
+                            const imgHeight = 90;
+                            const imgX = x + 10;
+                            const imgY = y + 10;
+                            
+                            const cornerRadius = 5;
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.moveTo(imgX + cornerRadius, imgY);
+                            ctx.lineTo(imgX + imgWidth - cornerRadius, imgY);
+                            ctx.quadraticCurveTo(imgX + imgWidth, imgY, imgX + imgWidth, imgY + cornerRadius);
+                            ctx.lineTo(imgX + imgWidth, imgY + imgHeight - cornerRadius);
+                            ctx.quadraticCurveTo(imgX + imgWidth, imgY + imgHeight, imgX + imgWidth - cornerRadius, imgY + imgHeight);
+                            ctx.lineTo(imgX + cornerRadius, imgY + imgHeight);
+                            ctx.quadraticCurveTo(imgX, imgY + imgHeight, imgX, imgY + imgHeight - cornerRadius);
+                            ctx.lineTo(imgX, imgY + cornerRadius);
+                            ctx.quadraticCurveTo(imgX, imgY, imgX + cornerRadius, imgY);
+                            ctx.closePath();
+                            ctx.fillStyle = "rgba(0,0,0,0.5)";
+                            ctx.fill();
+                            
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.moveTo(imgX + cornerRadius, imgY);
+                            ctx.lineTo(imgX + imgWidth - cornerRadius, imgY);
+                            ctx.quadraticCurveTo(imgX + imgWidth, imgY, imgX + imgWidth, imgY + cornerRadius);
+                            ctx.lineTo(imgX + imgWidth, imgY + imgHeight - cornerRadius);
+                            ctx.quadraticCurveTo(imgX + imgWidth, imgY + imgHeight, imgX + imgWidth - cornerRadius, imgY + imgHeight);
+                            ctx.lineTo(imgX + cornerRadius, imgY + imgHeight);
+                            ctx.quadraticCurveTo(imgX, imgY + imgHeight, imgX, imgY + imgHeight - cornerRadius);
+                            ctx.lineTo(imgX, imgY + cornerRadius);
+                            ctx.quadraticCurveTo(imgX, imgY, imgX + cornerRadius, imgY);
+                            ctx.closePath();
+                            ctx.clip();
+                            
+                            const imgAspect = img.naturalWidth / img.naturalHeight;
+                            const targetAspect = imgWidth / imgHeight;
+                            
+                            let drawWidth, drawHeight, drawX, drawY;
+                            
+                            if (imgAspect > targetAspect) {
+                                drawHeight = imgHeight;
+                                drawWidth = imgHeight * imgAspect;
+                                drawX = imgX + (imgWidth - drawWidth) / 2;
+                                drawY = imgY;
+                            } else {
+                                drawWidth = imgWidth;
+                                drawHeight = imgWidth / imgAspect;
+                                drawX = imgX;
+                                drawY = imgY + (imgHeight - drawHeight) / 2;
+                            }
+                            
+                            ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+                            ctx.restore();
+                            
+                            ctx.strokeStyle = "rgba(255,255,255,0.3)";
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                            ctx.restore();
+                        }
+                        
+                        const textStartX = x + (loadedImages[score.uniqueKey] ? 160 : 20);
+                        
+                        ctx.font = '16px "Microsoft YaHei"';
+                        ctx.fillStyle = "#ffffff";
+                        ctx.textAlign = "left";
+                        ctx.fillText(`P${i + 1}`, textStartX, y + 25);
+                        
+                        let fontSize = "16px";
+                        if (score.songName.length > 20) fontSize = "14px";
+                        if (score.songName.length > 25) fontSize = "12px";
+                        
+                        ctx.font = `bold ${fontSize} "Microsoft YaHei"`;
+                        ctx.fillStyle = "#ffffff";
+                        ctx.fillText(score.songName, textStartX, y + 55);
+                        
+                        ctx.font = '10px "Microsoft YaHei"';
+                        ctx.fillStyle = "#a0a0a0";
+                        ctx.fillText(`ID: ${score.songId}`, textStartX, y + 75);
+                        
+                        let diffColor = "#00cc00";
+                        if (score.difficulty === "HD") diffColor = "#ffa500";
+                        if (score.difficulty === "IN") diffColor = "#ff0000";
+                        if (score.difficulty === "AT") diffColor = "#a020f0";
+                        
+                        ctx.font = '12px "Microsoft YaHei"';
+                        ctx.fillStyle = diffColor;
+                        ctx.fillText(`${score.difficulty} Lv.${score.level.toFixed(1)}`, textStartX, y + 95);
+                        
+                        ctx.fillStyle = "#ffd700";
+                        ctx.font = '16px "Microsoft YaHei"';
+                        ctx.fillText(`${score.score.toLocaleString()} AP`, textStartX, y + 120);
+                        
+                        ctx.font = '12px "Microsoft YaHei"';
+                        ctx.fillStyle = "#c8c8c8";
+                        ctx.fillText(`${score.acc.toFixed(2)}% | 单曲RKS: ${score.singleRKS.toFixed(4)}`, textStartX, y + 145);
+                        
+                        ctx.fillStyle = "#a0a0a0";
+                        ctx.font = '10px "Microsoft YaHei"';
+                        ctx.fillText("无法推分", textStartX, y + 165);
+                    }
+                    
+                    yPos += Math.ceil(phiScores.length / 3) * 200 + 40;
+                }
+                
+                ProgressManager.nextStep();
+                if (bestScores.length > 0) {
+                    ctx.font = 'bold 24px "Microsoft YaHei"';
+                    ctx.fillStyle = "#3498db";
+                    ctx.textAlign = "center";
+                    ctx.fillText("Best成绩", width / 2, yPos);
+                    yPos += 40;
+                    
+                    const b27Scores = bestScores.slice(0, 27);
+                    const overflowScores = bestScores.slice(27);
+                    
+                    // 绘制B27成绩
+                    for (let i = 0; i < b27Scores.length; i++) {
+                        const score = b27Scores[i];
+                        const rowIndex = Math.floor(i / 3);
+                        const colIndex = i % 3;
+                        const x = 50 + 380 * colIndex;
+                        const y = yPos + rowIndex * 200;
+                        const rank = getRank(score.score, score.fc);
+                        const isPhi = score.isAP;
+                        
+                        ctx.fillStyle = isPhi ? "rgba(80,70,30,0.9)" : "rgba(50,50,50,0.9)";
+                        ctx.fillRect(x, y, 360, 180);
+                        ctx.strokeStyle = isPhi ? "#ffd700" : (rank === "FC" ? "#00c8ff" : "#646464");
+                        ctx.lineWidth = isPhi ? 3 : 2;
+                        ctx.strokeRect(x, y, 360, 180);
+                        
+                        // 绘制曲绘图片
+                        if (loadedImages[score.uniqueKey]) {
+                            const img = loadedImages[score.uniqueKey];
+                            const imgWidth = 140;
+                            const imgHeight = 90;
+                            const imgX = x + 10;
+                            const imgY = y + 10;
+                            
+                            const cornerRadius = 5;
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.moveTo(imgX + cornerRadius, imgY);
+                            ctx.lineTo(imgX + imgWidth - cornerRadius, imgY);
+                            ctx.quadraticCurveTo(imgX + imgWidth, imgY, imgX + imgWidth, imgY + cornerRadius);
+                            ctx.lineTo(imgX + imgWidth, imgY + imgHeight - cornerRadius);
+                            ctx.quadraticCurveTo(imgX + imgWidth, imgY + imgHeight, imgX + imgWidth - cornerRadius, imgY + imgHeight);
+                            ctx.lineTo(imgX + cornerRadius, imgY + imgHeight);
+                            ctx.quadraticCurveTo(imgX, imgY + imgHeight, imgX, imgY + imgHeight - cornerRadius);
+                            ctx.lineTo(imgX, imgY + cornerRadius);
+                            ctx.quadraticCurveTo(imgX, imgY, imgX + cornerRadius, imgY);
+                            ctx.closePath();
+                            ctx.fillStyle = "rgba(0,0,0,0.5)";
+                            ctx.fill();
+                            
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.moveTo(imgX + cornerRadius, imgY);
+                            ctx.lineTo(imgX + imgWidth - cornerRadius, imgY);
+                            ctx.quadraticCurveTo(imgX + imgWidth, imgY, imgX + imgWidth, imgY + cornerRadius);
+                            ctx.lineTo(imgX + imgWidth, imgY + imgHeight - cornerRadius);
+                            ctx.quadraticCurveTo(imgX + imgWidth, imgY + imgHeight, imgX + imgWidth - cornerRadius, imgY + imgHeight);
+                            ctx.lineTo(imgX + cornerRadius, imgY + imgHeight);
+                            ctx.quadraticCurveTo(imgX, imgY + imgHeight, imgX, imgY + imgHeight - cornerRadius);
+                            ctx.lineTo(imgX, imgY + cornerRadius);
+                            ctx.quadraticCurveTo(imgX, imgY, imgX + cornerRadius, imgY);
+                            ctx.closePath();
+                            ctx.clip();
+                            
+                            const imgAspect = img.naturalWidth / img.naturalHeight;
+                            const targetAspect = imgWidth / imgHeight;
+                            
+                            let drawWidth, drawHeight, drawX, drawY;
+                            
+                            if (imgAspect > targetAspect) {
+                                drawHeight = imgHeight;
+                                drawWidth = imgHeight * imgAspect;
+                                drawX = imgX + (imgWidth - drawWidth) / 2;
+                                drawY = imgY;
+                            } else {
+                                drawWidth = imgWidth;
+                                drawHeight = imgWidth / imgAspect;
+                                drawX = imgX;
+                                drawY = imgY + (imgHeight - drawHeight) / 2;
+                            }
+                            
+                            ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+                            ctx.restore();
+                            
+                            ctx.strokeStyle = "rgba(255,255,255,0.3)";
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                            ctx.restore();
+                        }
+                        
+                        const textStartX = x + (loadedImages[score.uniqueKey] ? 160 : 20);
+                        
+                        ctx.font = '16px "Microsoft YaHei"';
+                        ctx.fillStyle = "#ffffff";
+                        ctx.textAlign = "left";
+                        ctx.fillText(`B${i + 1}`, textStartX, y + 25);
+                        
+                        const isAlsoPhi = phiScores.some(phi => phi.uniqueKey === score.uniqueKey);
+                        if (isAlsoPhi) {
+                            ctx.fillStyle = "#ffd700";
+                            ctx.fillText("(P)", textStartX + 50, y + 25);
+                        }
+                        
+                        let fontSize = "16px";
+                        if (score.songName.length > 20) fontSize = "14px";
+                        if (score.songName.length > 25) fontSize = "12px";
+                        if (score.songName.length > 30) fontSize = "10px";
+                        
+                        ctx.font = `bold ${fontSize} "Microsoft YaHei"`;
+                        ctx.fillStyle = "#ffffff";
+                        ctx.fillText(score.songName, textStartX, y + 55);
+                        
+                        ctx.font = '10px "Microsoft YaHei"';
+                        ctx.fillStyle = "#a0a0a0";
+                        ctx.fillText(`ID: ${score.songId}`, textStartX, y + 75);
+                        
+                        let diffColor = "#00cc00";
+                        if (score.difficulty === "HD") diffColor = "#ffa500";
+                        if (score.difficulty === "IN") diffColor = "#ff0000";
+                        if (score.difficulty === "AT") diffColor = "#a020f0";
+                        
+                        ctx.font = '12px "Microsoft YaHei"';
+                        ctx.fillStyle = diffColor;
+                        ctx.fillText(`${score.difficulty} Lv.${score.level.toFixed(1)}`, textStartX, y + 95);
+                        
+                        ctx.font = '16px "Microsoft YaHei"';
+                        ctx.fillStyle = rank === "AP" ? "#ffd700" : (rank === "FC" ? "#00b4e6" : "#ffffff");
+                        ctx.fillText(`${score.score.toLocaleString()} ${rank}`, textStartX, y + 120);
+                        
+                        ctx.font = '12px "Microsoft YaHei"';
+                        ctx.fillStyle = "#c8c8c8";
+                        ctx.fillText(`${score.acc.toFixed(2)}% | RKS:${score.singleRKS.toFixed(4)}`, textStartX, y + 145);
+                        
+                        if (!isPhi) {
+                            const suggestion = getImprovementSuggestion(score.acc, score.singleRKS, score.level);
+                            if (suggestion !== "无法推分") {
+                                ctx.fillStyle = "#2ecc71";
+                                ctx.font = '10px "Microsoft YaHei"';
+                                ctx.fillText(suggestion, textStartX, y + 165);
+                            }
+                        }
+                    }
+                    
+                    yPos += Math.ceil(b27Scores.length / 3) * 200 + 40;
+                    
+                    // 绘制OVER FLOW成绩
+                    if (overflowScores.length > 0) {
+                        ctx.font = 'bold 24px "Microsoft YaHei"';
+                        ctx.fillStyle = "#e74c3c";
+                        ctx.textAlign = "center";
+                        ctx.fillText("--- OVER FLOW ---", width / 2, yPos);
+                        yPos += 40;
+                        
+                        for (let i = 0; i < overflowScores.length; i++) {
+                            const score = overflowScores[i];
+                            const rowIndex = Math.floor(i / 3);
+                            const colIndex = i % 3;
+                            const x = 50 + 380 * colIndex;
+                            const y = yPos + rowIndex * 200;
+                            const rank = getRank(score.score, score.fc);
+                            const isPhi = score.isAP;
+                            const overflowIndex = 28 + i;
+                            
+                            ctx.fillStyle = isPhi ? "rgba(80,70,30,0.9)" : "rgba(40,40,40,0.9)";
+                            ctx.fillRect(x, y, 360, 180);
+                            ctx.strokeStyle = isPhi ? "#ffd700" : (rank === "FC" ? "#00c8ff" : "#505050");
+                            ctx.lineWidth = isPhi ? 3 : 2;
+                            ctx.strokeRect(x, y, 360, 180);
+                            
+                            // 绘制曲绘图片
+                            if (loadedImages[score.uniqueKey]) {
+                                const img = loadedImages[score.uniqueKey];
+                                const imgWidth = 140;
+                                const imgHeight = 90;
+                                const imgX = x + 10;
+                                const imgY = y + 10;
+                                
+                                const cornerRadius = 5;
+                                ctx.save();
+                                ctx.beginPath();
+                                ctx.moveTo(imgX + cornerRadius, imgY);
+                                ctx.lineTo(imgX + imgWidth - cornerRadius, imgY);
+                                ctx.quadraticCurveTo(imgX + imgWidth, imgY, imgX + imgWidth, imgY + cornerRadius);
+                                ctx.lineTo(imgX + imgWidth, imgY + imgHeight - cornerRadius);
+                                ctx.quadraticCurveTo(imgX + imgWidth, imgY + imgHeight, imgX + imgWidth - cornerRadius, imgY + imgHeight);
+                                ctx.lineTo(imgX + cornerRadius, imgY + imgHeight);
+                                ctx.quadraticCurveTo(imgX, imgY + imgHeight, imgX, imgY + imgHeight - cornerRadius);
+                                ctx.lineTo(imgX, imgY + cornerRadius);
+                                ctx.quadraticCurveTo(imgX, imgY, imgX + cornerRadius, imgY);
+                                ctx.closePath();
+                                ctx.fillStyle = "rgba(0,0,0,0.5)";
+                                ctx.fill();
+                                
+                                ctx.save();
+                                ctx.beginPath();
+                                ctx.moveTo(imgX + cornerRadius, imgY);
+                                ctx.lineTo(imgX + imgWidth - cornerRadius, imgY);
+                                ctx.quadraticCurveTo(imgX + imgWidth, imgY, imgX + imgWidth, imgY + cornerRadius);
+                                ctx.lineTo(imgX + imgWidth, imgY + imgHeight - cornerRadius);
+                                ctx.quadraticCurveTo(imgX + imgWidth, imgY + imgHeight, imgX + imgWidth - cornerRadius, imgY + imgHeight);
+                                ctx.lineTo(imgX + cornerRadius, imgY + imgHeight);
+                                ctx.quadraticCurveTo(imgX, imgY + imgHeight, imgX, imgY + imgHeight - cornerRadius);
+                                ctx.lineTo(imgX, imgY + cornerRadius);
+                                ctx.quadraticCurveTo(imgX, imgY, imgX + cornerRadius, imgY);
+                                ctx.closePath();
+                                ctx.clip();
+                                
+                                const imgAspect = img.naturalWidth / img.naturalHeight;
+                                const targetAspect = imgWidth / imgHeight;
+                                
+                                let drawWidth, drawHeight, drawX, drawY;
+                                
+                                if (imgAspect > targetAspect) {
+                                    drawHeight = imgHeight;
+                                    drawWidth = imgHeight * imgAspect;
+                                    drawX = imgX + (imgWidth - drawWidth) / 2;
+                                    drawY = imgY;
+                                } else {
+                                    drawWidth = imgWidth;
+                                    drawHeight = imgWidth / imgAspect;
+                                    drawX = imgX;
+                                    drawY = imgY + (imgHeight - drawHeight) / 2;
+                                }
+                                
+                                ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+                                ctx.restore();
+                                
+                                ctx.strokeStyle = "rgba(255,255,255,0.3)";
+                                ctx.lineWidth = 1;
+                                ctx.stroke();
+                                ctx.restore();
+                            }
+                            
+                            const textStartX = x + (loadedImages[score.uniqueKey] ? 160 : 20);
+                            
+                            ctx.font = '16px "Microsoft YaHei"';
+                            ctx.fillStyle = "#c8c8c8";
+                            ctx.textAlign = "left";
+                            ctx.fillText(`B${overflowIndex}`, textStartX, y + 25);
+                            
+                            const isAlsoPhi = phiScores.some(phi => phi.uniqueKey === score.uniqueKey);
+                            if (isAlsoPhi) {
+                                ctx.fillStyle = "#ffd700";
+                                ctx.fillText("(P)", textStartX + 50, y + 25);
+                            }
+                            
+                            let fontSize = "16px";
+                            if (score.songName.length > 20) fontSize = "14px";
+                            if (score.songName.length > 25) fontSize = "12px";
+                            if (score.songName.length > 30) fontSize = "10px";
+                            
+                            ctx.font = `bold ${fontSize} "Microsoft YaHei"`;
+                            ctx.fillStyle = "#ffffff";
+                            ctx.fillText(score.songName, textStartX, y + 55);
+                            
+                            ctx.font = '10px "Microsoft YaHei"';
+                            ctx.fillStyle = "#a0a0a0";
+                            ctx.fillText(`ID: ${score.songId}`, textStartX, y + 75);
+                            
+                            let diffColor = "#009900";
+                            if (score.difficulty === "HD") diffColor = "#cc8400";
+                            if (score.difficulty === "IN") diffColor = "#cc0000";
+                            if (score.difficulty === "AT") diffColor = "#8200cc";
+                            
+                            ctx.font = '12px "Microsoft YaHei"';
+                            ctx.fillStyle = diffColor;
+                            ctx.fillText(`${score.difficulty} Lv.${score.level.toFixed(1)}`, textStartX, y + 95);
+                            
+                            ctx.font = '16px "Microsoft YaHei"';
+                            ctx.fillStyle = rank === "AP" ? "#ffd700" : (rank === "FC" ? "#00b4e6" : "#c8c8c8");
+                            ctx.fillText(`${score.score.toLocaleString()} ${rank}`, textStartX, y + 120);
+                            
+                            ctx.font = '12px "Microsoft YaHei"';
+                            ctx.fillStyle = "#969696";
+                            ctx.fillText(`${score.acc.toFixed(2)}% | RKS:${score.singleRKS.toFixed(4)}`, textStartX, y + 145);
+                            
+                            if (!isPhi) {
+                                const suggestion = getImprovementSuggestion(score.acc, score.singleRKS, score.level);
+                                if (suggestion !== "无法推分") {
+                                    ctx.fillStyle = "#2ecc71";
+                                    ctx.font = '10px "Microsoft YaHei"';
+                                    ctx.fillText(suggestion, textStartX, y + 165);
+                                }
+                            }
+                        }
+                        
+                        yPos += Math.ceil(overflowScores.length / 3) * 200 + 40;
+                    }
+                }
+                
+                ProgressManager.nextStep();
+                if (customText) {
+                    ctx.font = '20px "Microsoft YaHei"';
+                    ctx.fillStyle = "#c8c8c8";
+                    ctx.textAlign = "center";
+                    customText.split("\n").forEach(line => {
+                        line = line.trim();
+                        if (line) {
+                            ctx.fillText(line, width / 2, yPos);
+                            yPos += 30;
+                        }
+                    });
+                    yPos += 20;
+                }
+                
+                ProgressManager.nextStep();
+                ctx.font = '16px "Microsoft YaHei"';
+                ctx.fillStyle = "rgba(100,100,100,0.7)";
+                ctx.fillText("Generated by TeinxictionMC", width / 2, yPos + 20);
+                
+                ProgressManager.nextStep();
+                
+                const image = document.createElement("img");
+                image.src = canvas.toDataURL("image/png");
+                image.alt = "Phigros B成绩图片";
+                image.style.maxWidth = "100%";
+                image.style.border = "2px solid #3498db";
+                image.style.borderRadius = "10px";
+                document.getElementById("imageContainer").appendChild(image);
+                document.getElementById("loadingText").style.display = "none";
+                
+                if (autoDownload) {
+                    const downloadLink = document.createElement("a");
+                    downloadLink.download = `phigros_b${bCount}_${nickname.replace(/[^\w]/g, "_")}_${Date.now()}.png`;
+                    downloadLink.href = canvas.toDataURL("image/png");
+                    downloadLink.click();
+                }
+                
+                let apCountInBest = 0;
+                bestScores.forEach(score => {
+                    if (score.isAP) apCountInBest++;
+                });
+                
+                console.log(`图片生成成功！玩家: ${nickname}, RKS: ${rks.toFixed(6)}, Phi成绩: ${phiScores.length}个, Best成绩: ${bestScores.length}个, 其中AP成绩: ${apCountInBest}个`);
+            } catch (error) {
+                document.getElementById("loadingText").style.display = "none";
+                console.error("生成图片时出错:", error);
+                alert(`生成图片失败: ${error.message}`);
+            }
+        }
+
+        // 初始化页面
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll(".tab").forEach(tab => {
+                tab.addEventListener("click", function() {
+                    const tabId = this.getAttribute("data-tab");
+                    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+                    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+                    this.classList.add("active");
+                    document.getElementById(`${tabId}-tab`).classList.add("active");
+                });
+            });
+            
+            document.getElementById("generateBtn").addEventListener("click", generateBImage);
+            
+            document.addEventListener("keydown", function(event) {
+                if (event.ctrlKey && event.key === "Enter") {
+                    generateBImage();
+                }
+            });
+            
+            document.getElementById("autoDownload").checked = false;
+        });
+    </script>
+</body>
+</html>
