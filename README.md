@@ -1,4 +1,6 @@
 # TXGetScore
+## 注意
+本项目由于神秘原因停止更新，请留意之后的TXGetScore-V2（现已更名为PhiArchive）
 ## 项目说明
 1. 本项目由TeinxictionMC开发
 2. 本项目使用了 [VGMStream](https://github.com/vgmstream/vgmstream)，[PhigrosResource](https://github.com/7aGiven/Phigros_Resource)以及[PhiCloudAction](https://github.com/wms26/Phi-CloudAction-python)
@@ -43,4 +45,5 @@ python main.py
 - [x] 自定义B30图片文案和XML
 - [x] 查询单曲成绩 
 ## 官网(应该算是吧)
+
 [官网？](https://killkpa.miraheze.org/wiki/TXGetScore)
